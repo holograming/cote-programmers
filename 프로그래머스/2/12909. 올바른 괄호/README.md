@@ -1,3 +1,10 @@
+----------------
+## review   
+- 문제를 잘 읽어야 한다. 
+- Stack 연관 문제였으나, 실제로 stack을 구현함.
+- ())((()))(() 반례.
+----------------
+
 # [level 2] 올바른 괄호 - 12909 
 
 [문제 링크](https://school.programmers.co.kr/learn/courses/30/lessons/12909) 
