@@ -1,3 +1,9 @@
+----------------
+## review   
+- 어떤 stl을 선택해야하나? 왜 LIFO를 하는게 맞는건가?
+- return 값에 반환에 대한 결정
+----------------
+
 # [level 2] 짝지어 제거하기 - 12973 
 
 [문제 링크](https://school.programmers.co.kr/learn/courses/30/lessons/12973#) 
