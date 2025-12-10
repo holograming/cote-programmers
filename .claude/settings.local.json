@@ -7,7 +7,14 @@
       "Bash(git -C \"D:\\cote-programmers\" log --oneline -10)",
       "Bash(git -C \"D:\\cote-programmers\" show 7151b93 --name-status)",
       "Bash(git -C \"D:\\cote-programmers\" diff --name-only 7151b93^ 7151b93)",
-      "Bash(git -C \"D:\\cote-programmers\" config --global core.quotepath false)"
+      "Bash(git -C \"D:\\cote-programmers\" config --global core.quotepath false)",
+      "Bash(git -C \"D:\\cote-programmers\" status)",
+      "Bash(git -C \"D:\\cote-programmers\" diff .github/workflows/sync-to-notion.yml scripts/sync_to_notion.py)",
+      "Bash(git -C \"D:\\cote-programmers\" status --short)",
+      "Bash(git -C \"D:\\cote-programmers\" diff-index --cached HEAD -- .github/workflows/sync-to-notion.yml scripts/sync_to_notion.py)",
+      "Bash(git -C \"D:\\cote-programmers\" add .github/workflows/sync-to-notion.yml scripts/sync_to_notion.py)",
+      "Bash(git -C \"D:\\cote-programmers\" add -A)",
+      "Bash(git -C \"D:\\cote-programmers\" commit -m \"$(cat <<''EOF''\nfix: github actions workflow exit code issue\n\n- Fix bash subshell issue with process substitution (line 142)\n- Add explicit sys.exit(0) for successful completion\n- Change secrets/vars references for proper GitHub Actions integration\n- Ensure SUCCESS_COUNT and FAIL_COUNT are properly tracked\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ]
   }
 }
