@@ -116,19 +116,13 @@ jobs:
           echo "동기화할 파일 개수: $(echo "$README_FILES" | jq 'length')"
           echo ""
 
-          # 디버깅: Process substitution 테스트
-          echo "🔍 [DEBUG] Process Substitution 테스트"
-          echo "$README_FILES" | jq -r '.[]' | while read -r line; do
-            echo "  FILE: $line"
-          done
-          echo "---"
+          # README 파일 목록을 배열로 저장 (mapfile 사용)
+          mapfile -t FILES < <(echo "$README_FILES" | jq -r '.[]')
+          echo "🔍 [DEBUG] 파일 배열 생성 완료: ${#FILES[@]}개"
 
           # 각 README 파일에 대해 스크립트 실행
-          # Process substitution으로 서브쉘 문제 해결
-          FILE_COUNT=0
-          while IFS= read -r FILE_PATH; do
-            ((FILE_COUNT++))
-            echo "🔍 [DEBUG] 파일 $FILE_COUNT: $FILE_PATH"
+          for FILE_PATH in "${FILES[@]}"; do
+            echo "🔍 [DEBUG] 처리 중: $FILE_PATH"
 
             # GitHub URL 생성
             GITHUB_URL="https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/${FILE_PATH}"
@@ -142,21 +136,21 @@ jobs:
             if python -X utf8 scripts/sync_to_notion.py "$GITHUB_URL"; then
               echo "✅ 성공"
               ((SUCCESS_COUNT++))
-              echo "🔍 [DEBUG] SUCCESS_COUNT 증가: $SUCCESS_COUNT"
+              echo "🔍 [DEBUG] SUCCESS_COUNT=$SUCCESS_COUNT"
             else
               PYTHON_EXIT=$?
               echo "❌ 실패 (exit code: $PYTHON_EXIT)"
               ((FAIL_COUNT++))
-              echo "🔍 [DEBUG] FAIL_COUNT 증가: $FAIL_COUNT"
+              echo "🔍 [DEBUG] FAIL_COUNT=$FAIL_COUNT"
             fi
 
             echo ""
             # Rate limit 방지
             sleep 2
-          done < <(echo "$README_FILES" | jq -r '.[]')
+          done
 
-          echo "🔍 [DEBUG] while 루프 완료 (exit code: $?)"
-          echo "🔍 [DEBUG] 최종 SUCCESS_COUNT=$SUCCESS_COUNT, FAIL_COUNT=$FAIL_COUNT"
+          echo "🔍 [DEBUG] for 루프 완료"
+          echo "🔍 [DEBUG] 최종: SUCCESS_COUNT=$SUCCESS_COUNT, FAIL_COUNT=$FAIL_COUNT"
 
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
