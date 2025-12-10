@@ -70,4 +70,4 @@
 target인 "cog"는 words 안에 없기 때문에 변환할 수 없습니다.</p>
 
 
-> 출처: 프로그래머스 코딩 테스트 연습, https://school.programmers.co.kr/learn/challenges
+> 출처: 프로그래머스 코딩 테스트 연습, https://school.programmers.co.kr/learn/challenges 
