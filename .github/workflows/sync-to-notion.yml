@@ -1,0 +1,170 @@
+name: Sync to Notion
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '프로그래머스/**'
+
+jobs:
+  sync:
+    name: Sync changed problems to Notion
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install requests python-dotenv
+
+      - name: Detect changed README files
+        id: changed-files
+        run: |
+          # 변경된 파일 목록 가져오기
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep '^프로그래머스/.*README\.md$' || true)
+          else
+            # 초기 커밋인 경우 모든 README 파일 처리
+            CHANGED_FILES=$(git ls-files '프로그래머스/**/README.md' || true)
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "변경된 README 파일이 없습니다."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "변경된 README 파일:"
+            echo "$CHANGED_FILES"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            # JSON 배열로 변환
+            README_ARRAY=$(echo "$CHANGED_FILES" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "readme_files=$README_ARRAY" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification (Start)
+        if: steps.changed-files.outputs.has_changes == 'true' && secrets.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          README_FILES='${{ steps.changed-files.outputs.readme_files }}'
+          FILE_COUNT=$(echo "$README_FILES" | jq 'length')
+
+          # 파일 목록 생성
+          FILE_LIST=$(echo "$README_FILES" | jq -r '.[]' | sed 's/^/• /')
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "text": "🚀 Notion 동기화 시작",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*변경된 파일*: $FILE_COUNT개\n$FILE_LIST"
+                }
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"
+
+      - name: Sync to Notion
+        if: steps.changed-files.outputs.has_changes == 'true'
+        id: sync-result
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          README_FILES='${{ steps.changed-files.outputs.readme_files }}'
+
+          SUCCESS_COUNT=0
+          FAIL_COUNT=0
+          START_TIME=$(date +%s)
+
+          echo "동기화할 파일 개수: $(echo "$README_FILES" | jq 'length')"
+          echo ""
+
+          # 각 README 파일에 대해 스크립트 실행
+          echo "$README_FILES" | jq -r '.[]' | while read -r FILE_PATH; do
+            # GitHub URL 생성
+            GITHUB_URL="https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/${FILE_PATH}"
+
+            echo "======================================"
+            echo "처리 중: $FILE_PATH"
+            echo "URL: $GITHUB_URL"
+            echo "======================================"
+
+            # Python 스크립트 실행
+            if python -X utf8 scripts/sync_to_notion.py "$GITHUB_URL"; then
+              echo "✅ 성공"
+              ((SUCCESS_COUNT++))
+            else
+              echo "❌ 실패"
+              ((FAIL_COUNT++))
+            fi
+
+            echo ""
+            # Rate limit 방지
+            sleep 2
+          done
+
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+
+          echo "처리 완료: 성공=$SUCCESS_COUNT, 실패=$FAIL_COUNT, 실행시간=${DURATION}초"
+          echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
+          echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+
+      - name: Send Slack notification (Complete)
+        if: always() && steps.changed-files.outputs.has_changes == 'true' && secrets.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          SUCCESS_COUNT=${{ steps.sync-result.outputs.success_count || '0' }}
+          FAIL_COUNT=${{ steps.sync-result.outputs.fail_count || '0' }}
+          DURATION=${{ steps.sync-result.outputs.duration || '0' }}
+
+          if [ "$FAIL_COUNT" -eq 0 ]; then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="성공"
+          else
+            STATUS_EMOJI="⚠️"
+            STATUS_TEXT="일부 실패"
+          fi
+
+          PAYLOAD=$(cat <<EOF
+          {
+            "text": "$STATUS_EMOJI Notion 동기화 $STATUS_TEXT",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*처리 결과*\n✅ 성공: $SUCCESS_COUNT개\n❌ 실패: $FAIL_COUNT개\n⏱️ 실행 시간: ${DURATION}초"
+                }
+              }
+            ]
+          }
+          EOF
+          )
+
+          curl -X POST "$SLACK_WEBHOOK_URL" \
+            -H 'Content-Type: application/json' \
+            -d "$PAYLOAD"
