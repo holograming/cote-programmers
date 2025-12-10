@@ -18,6 +18,9 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Configure git for Korean filenames
+        run: git config --global core.quotepath false
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -35,11 +38,16 @@ jobs:
           # 변경된 파일 목록 가져오기 (새로 추가된 파일도 포함)
           if git rev-parse HEAD^ >/dev/null 2>&1; then
             # --diff-filter=ACMRT: Added(A), Copied(C), Modified(M), Renamed(R), Type changed(T)
-            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT HEAD^ HEAD | grep '^프로그래머스/.*README\.md$' || true)
+            CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT HEAD^ HEAD | grep -E 'README\.md$' | grep '^프로그래머스/' || true)
           else
             # 초기 커밋인 경우 모든 README 파일 처리
-            CHANGED_FILES=$(git ls-files '프로그래머스/**/README.md' || true)
+            CHANGED_FILES=$(git ls-files 'README.md' | grep '^프로그래머스/' || true)
           fi
+
+          # 디버그: 감지된 파일 목록 출력
+          echo "DEBUG: Changed files detected:"
+          echo "$CHANGED_FILES"
+          echo "---"
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "변경된 README 파일이 없습니다."

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"D:\\cote-programmers\" diff --name-only HEAD~1 HEAD)",
+      "Bash(git -C \"D:\\cote-programmers\" diff --name-only --diff-filter=ACMRT HEAD~1 HEAD)",
+      "Bash(git -C \"D:\\cote-programmers\" log:*)",
+      "Bash(git -C \"D:\\cote-programmers\" log --oneline -10)",
+      "Bash(git -C \"D:\\cote-programmers\" show 7151b93 --name-status)",
+      "Bash(git -C \"D:\\cote-programmers\" diff --name-only 7151b93^ 7151b93)",
+      "Bash(git -C \"D:\\cote-programmers\" config --global core.quotepath false)"
+    ]
+  }
+}
