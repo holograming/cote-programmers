@@ -18,7 +18,7 @@
 
 2025년 12월 10일 13:52:55
 
-### 문제 설명
+### 문제 설명  
 
 <p>두 개의 단어 begin, target과 단어의 집합 words가 있습니다. 아래와 같은 규칙을 이용하여 begin에서 target으로 변환하는 가장 짧은 변환 과정을 찾으려고 합니다.</p>
 <div class="highlight"><pre class="codehilite"><code>1. 한 번에 한 개의 알파벳만 바꿀 수 있습니다.
