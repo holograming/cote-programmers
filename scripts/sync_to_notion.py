@@ -847,9 +847,9 @@ def main():
         print("✅ 노션 동기화 완료!")
         print(f"🔗 페이지 URL: {page_url}")
         print("=" * 50)
-        
-        return result
-        
+
+        sys.exit(0)  # 성공 종료
+
     except requests.exceptions.RequestException as e:
         print(f"❌ 네트워크 오류: {e}")
         sys.exit(1)

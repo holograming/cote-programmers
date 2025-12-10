@@ -117,7 +117,8 @@ jobs:
           echo ""
 
           # 각 README 파일에 대해 스크립트 실행
-          echo "$README_FILES" | jq -r '.[]' | while read -r FILE_PATH; do
+          # Process substitution으로 서브쉘 문제 해결
+          while IFS= read -r FILE_PATH; do
             # GitHub URL 생성
             GITHUB_URL="https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/${FILE_PATH}"
 
@@ -138,7 +139,7 @@ jobs:
             echo ""
             # Rate limit 방지
             sleep 2
-          done
+          done < <(echo "$README_FILES" | jq -r '.[]')
 
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
