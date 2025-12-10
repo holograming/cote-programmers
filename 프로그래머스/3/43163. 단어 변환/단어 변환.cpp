@@ -10,7 +10,7 @@ bool changable(std::string str1, std::string str2) {
   
     if(!str1.empty() && !str2.empty() && str1.size() != str2.size())
         return false;
-
+    
     int notMatched = 0;
     for(int i=0; i<str1.size(); ++i)
     {
@@ -18,9 +18,11 @@ bool changable(std::string str1, std::string str2) {
 
         if(notMatched > 1) return false;
     }
+
     return notMatched == 1;
 }
  
+
 int solution(string begin, string target, vector<string> words) {
      // target이 words에 없으면 불가능
     bool hasTarget = false;
@@ -42,7 +44,6 @@ int solution(string begin, string target, vector<string> words) {
     que.push(begin);
     map_[begin] = 0;
     
-    int count =0;
     bool isFind = false;
     while(!que.empty())
     {
