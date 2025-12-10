@@ -52,10 +52,16 @@ jobs:
           fi
 
       - name: Send Slack notification (Start)
-        if: steps.changed-files.outputs.has_changes == 'true' && secrets.SLACK_WEBHOOK_URL != ''
+        if: steps.changed-files.outputs.has_changes == 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          # SLACK_WEBHOOK_URL이 설정되지 않았으면 건너뛰기
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "⏭️ SLACK_WEBHOOK_URL이 설정되지 않았습니다. Slack 알림을 건너뜁니다."
+            exit 0
+          fi
+
           README_FILES='${{ steps.changed-files.outputs.readme_files }}'
           FILE_COUNT=$(echo "$README_FILES" | jq 'length')
 
@@ -133,10 +139,16 @@ jobs:
           echo "duration=$DURATION" >> $GITHUB_OUTPUT
 
       - name: Send Slack notification (Complete)
-        if: always() && steps.changed-files.outputs.has_changes == 'true' && secrets.SLACK_WEBHOOK_URL != ''
+        if: always() && steps.changed-files.outputs.has_changes == 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          # SLACK_WEBHOOK_URL이 설정되지 않았으면 건너뛰기
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "⏭️ SLACK_WEBHOOK_URL이 설정되지 않았습니다. Slack 알림을 건너뜁니다."
+            exit 0
+          fi
+
           SUCCESS_COUNT=${{ steps.sync-result.outputs.success_count || '0' }}
           FAIL_COUNT=${{ steps.sync-result.outputs.fail_count || '0' }}
           DURATION=${{ steps.sync-result.outputs.duration || '0' }}
