@@ -16,13 +16,13 @@ bool changable(std::string str1, std::string str2) {
     {
         if(str1[i] != str2[i]) notMatched++;
 
-        if(notMatched > 1) return false;
+        if(notMatched > 1) 
+            return false;
     }
 
     return notMatched == 1;
 }
  
-
 int solution(string begin, string target, vector<string> words) {
      // target이 words에 없으면 불가능
     bool hasTarget = false;
