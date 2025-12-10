@@ -116,9 +116,20 @@ jobs:
           echo "동기화할 파일 개수: $(echo "$README_FILES" | jq 'length')"
           echo ""
 
+          # 디버깅: Process substitution 테스트
+          echo "🔍 [DEBUG] Process Substitution 테스트"
+          echo "$README_FILES" | jq -r '.[]' | while read -r line; do
+            echo "  FILE: $line"
+          done
+          echo "---"
+
           # 각 README 파일에 대해 스크립트 실행
           # Process substitution으로 서브쉘 문제 해결
+          FILE_COUNT=0
           while IFS= read -r FILE_PATH; do
+            ((FILE_COUNT++))
+            echo "🔍 [DEBUG] 파일 $FILE_COUNT: $FILE_PATH"
+
             # GitHub URL 생성
             GITHUB_URL="https://github.com/${GITHUB_REPOSITORY}/blob/${GITHUB_REF_NAME}/${FILE_PATH}"
 
@@ -131,9 +142,12 @@ jobs:
             if python -X utf8 scripts/sync_to_notion.py "$GITHUB_URL"; then
               echo "✅ 성공"
               ((SUCCESS_COUNT++))
+              echo "🔍 [DEBUG] SUCCESS_COUNT 증가: $SUCCESS_COUNT"
             else
-              echo "❌ 실패"
+              PYTHON_EXIT=$?
+              echo "❌ 실패 (exit code: $PYTHON_EXIT)"
               ((FAIL_COUNT++))
+              echo "🔍 [DEBUG] FAIL_COUNT 증가: $FAIL_COUNT"
             fi
 
             echo ""
@@ -141,25 +155,38 @@ jobs:
             sleep 2
           done < <(echo "$README_FILES" | jq -r '.[]')
 
+          echo "🔍 [DEBUG] while 루프 완료 (exit code: $?)"
+          echo "🔍 [DEBUG] 최종 SUCCESS_COUNT=$SUCCESS_COUNT, FAIL_COUNT=$FAIL_COUNT"
+
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
 
+          echo ""
           echo "처리 완료: 성공=$SUCCESS_COUNT, 실패=$FAIL_COUNT, 실행시간=${DURATION}초"
 
-          # GitHub Output 설정 (GITHUB_OUTPUT이 설정되지 않으면 생략)
+          # GitHub Output 설정 디버깅
+          echo "🔍 [DEBUG] GITHUB_OUTPUT='$GITHUB_OUTPUT'"
+
           if [ -z "$GITHUB_OUTPUT" ]; then
-            echo "⚠️ GITHUB_OUTPUT이 설정되지 않았습니다. Output 설정을 건너뜁니다."
+            echo "⚠️ GITHUB_OUTPUT이 설정되지 않았습니다."
           else
-            echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
-            echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
-            echo "duration=$DURATION" >> $GITHUB_OUTPUT
+            echo "🔍 [DEBUG] GITHUB_OUTPUT 파일에 쓰기 시작"
+            echo "success_count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT && echo "✅ success_count 기록됨"
+            echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT && echo "✅ fail_count 기록됨"
+            echo "duration=$DURATION" >> $GITHUB_OUTPUT && echo "✅ duration 기록됨"
+            echo "🔍 [DEBUG] GITHUB_OUTPUT 파일 내용:"
+            cat $GITHUB_OUTPUT 2>/dev/null || echo "  (파일 읽기 실패)"
           fi
 
           # 실행 결과에 따라 exit code 설정
+          echo ""
+          echo "🔍 [DEBUG] Exit code 결정: FAIL_COUNT=$FAIL_COUNT"
           if [ $FAIL_COUNT -eq 0 ]; then
-            exit 0  # 성공
+            echo "✅ 모든 작업 성공 → exit 0"
+            exit 0
           else
-            exit 1  # 실패 있음
+            echo "❌ 실패한 작업 있음 → exit 1"
+            exit 1
           fi
 
       - name: Send Slack notification (Complete)
