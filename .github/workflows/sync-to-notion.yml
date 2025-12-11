@@ -107,6 +107,8 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
+          set +e  # 오류 발생해도 스크립트 계속 실행
+
           README_FILES='${{ steps.changed-files.outputs.readme_files }}'
 
           SUCCESS_COUNT=0
