@@ -116,12 +116,10 @@ jobs:
           echo "동기화할 파일 개수: $(echo "$README_FILES" | jq 'length')"
           echo ""
 
-          # README 파일 목록을 배열로 저장 (mapfile 사용)
-          mapfile -t FILES < <(echo "$README_FILES" | jq -r '.[]')
-          echo "🔍 [DEBUG] 파일 배열 생성 완료: ${#FILES[@]}개"
+          # README 파일 목록을 한 줄씩 처리
+          while IFS= read -r FILE_PATH; do
+            [ -z "$FILE_PATH" ] && continue
 
-          # 각 README 파일에 대해 스크립트 실행
-          for FILE_PATH in "${FILES[@]}"; do
             echo "🔍 [DEBUG] 처리 중: $FILE_PATH"
 
             # GitHub URL 생성
@@ -147,9 +145,9 @@ jobs:
             echo ""
             # Rate limit 방지
             sleep 2
-          done
+          done < <(echo "$README_FILES" | jq -r '.[]')
 
-          echo "🔍 [DEBUG] for 루프 완료"
+          echo "🔍 [DEBUG] while 루프 완료"
           echo "🔍 [DEBUG] 최종: SUCCESS_COUNT=$SUCCESS_COUNT, FAIL_COUNT=$FAIL_COUNT"
 
           END_TIME=$(date +%s)
