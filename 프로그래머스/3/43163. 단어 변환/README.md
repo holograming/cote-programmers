@@ -3,7 +3,7 @@
 [문제 링크](https://school.programmers.co.kr/learn/courses/30/lessons/43163) 
 
 ### 성능 요약
-
+ 
 메모리: 4.21 MB, 시간: 0.07 ms
 
 ### 구분
