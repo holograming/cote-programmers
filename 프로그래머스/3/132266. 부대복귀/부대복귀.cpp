@@ -54,7 +54,7 @@ std::vector<int> solution(int n, std::vector<std::vector<int>> roads, std::vecto
         int const cur = Q.front();
         Q.pop();
         
-        for(int next : roadMap[cur]) {
+        for(int const next : roadMap[cur]) {
             if(dist[next] == -1) {
                 dist[next] = dist[cur] + 1;
                 Q.push(next);
@@ -62,12 +62,9 @@ std::vector<int> solution(int n, std::vector<std::vector<int>> roads, std::vecto
         }
     }
     
-    // O(1)로 각 source 거리 조회
-    for(int src : sources) {
+    for(int const src : sources) {
         answer.push_back(dist[src]);
     }
-
-    return answer;
 
     return answer;
 }
