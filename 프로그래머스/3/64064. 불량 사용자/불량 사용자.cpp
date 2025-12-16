@@ -2,9 +2,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
-#include <set>
-
-using namespace std;
+#include <algorithm>
 
 // 
 // 당첨에 제제 아이디 목록의 경우의 수.
@@ -26,6 +24,30 @@ using namespace std;
     [fradi, frodo, abc123, frodoc,
     [fradi, crodo, abc123, frodoc,
 */
+
+void solve(std::vector<std::vector<int>> const groups, int idx, std::vector<int> current, std::vector<std::vector<int>>& results) {
+    
+    if (idx == groups.size()) {
+        std::vector<int> sorted = current;
+        std::sort(sorted.begin(), sorted.end());
+        
+        if (std::find(results.begin(), results.end(), sorted) == results.end()) {
+            results.push_back(sorted);
+        }
+        return;
+    }
+    
+    // 현재 그룹에서 하나씩 선택
+    //{ 0, 1}, { 1, 2}, { 4, 5}, { 4, 5 }
+    for (int num : groups[idx]) {
+        // 중복 체크
+        if (std::find(current.begin(), current.end(), num) == current.end()) {
+            current.push_back(num);
+            solve(groups, idx + 1, current, results); // 다음 그룹에서 하나 찾기, 
+            current.pop_back(); // 이전 값이 남아있음!
+        } 
+    }
+}
 
 bool _CompareChar(std::string const uid, std::string const bid) {
     if(uid.size() != bid.size()) return false;
@@ -61,41 +83,8 @@ int solution(std::vector<std::string> user_id, std::vector<std::string> banned_i
         groups.push_back(locals);
     } 
     
-    std::set<std::set<int>> results;
-    
-    int const n = groups.size();
-    vector<int> indices(n, 0);
-    
-    while (true) {
-        // 현재 조합 생성
-        std::set<int> combo;
-        bool valid = true;
-        
-        for (int i = 0; i < n; i++) {
-            int num = groups[i][indices[i]];
-            if (combo.count(num)) {  // 중복 체크
-                valid = false;
-                break;
-            }
-            combo.insert(num);
-        }
-        
-        if (valid) {
-            results.insert(combo);
-        }
-        
-        // 다음 조합으로 이동 (오도미터 방식)
-        int pos = n - 1;
-        while (pos >= 0) {
-            indices[pos]++;
-            if (indices[pos] < groups[pos].size()) break;
-            indices[pos] = 0;
-            pos--;
-        }
-        if (pos < 0) break;  // 모든 조합 완료
-    }
-    
-    
+    std::vector<std::vector<int>> results;
+    solve(groups, 0, {}, results);
     
     for(auto group : groups)
     {
@@ -105,12 +94,5 @@ int solution(std::vector<std::string> user_id, std::vector<std::string> banned_i
         std::cout << " ]\n";
     }
     answer = results.size();
-    
-    
-    
-    
-    
-    
-    
     return answer;
 }
